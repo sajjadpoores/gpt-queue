@@ -1,15 +1,9 @@
-import { ChatGPTAPIBrowser } from "chatgpt";
-async function main() {
-  const api = new ChatGPTAPIBrowser({
-    email: "sajjadpooresq@gmail.com",
-    password: "SerooP@75",
-    isGoogleLogin: true,
-  });
-  await api.initSession();
+import { AccountController } from "./modules/account/account";
 
-  const result = await api.sendMessage("Hello World!");
-  console.log(result.response);
-}
+const accountManager = new AccountController();
+const accounts = await accountManager.loadData();
 
 
-main()
+accounts.forEach(async account => {
+    await account.connect()
+})
