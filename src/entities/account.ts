@@ -43,10 +43,15 @@ export class Account {
     }
   }
 
-  async sendMssg(api: ChatGPTAPIBrowser, mssg: string) {
+  async sendMessage(api: ChatGPTAPIBrowser, mssg: string) {
     try {
-      await api.sendMessage(mssg);
-      return true;
+      if(api.getIsAuthenticated()) {
+        await api.sendMessage(mssg);
+        return true;
+      }
+      else {
+        api.resetSession();
+      }
     } catch (err) {
       console.log(err.message);
       return false;

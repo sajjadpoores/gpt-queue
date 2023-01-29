@@ -7,11 +7,9 @@ export enum QuestionStatus {
 }
 
 export class Question {
-  id: number;
-  title: string;
-  content: string;
+  text: string;
   answer: string;
-  status: QuestionStatus;
-  isAsked: boolean;
+  status: QuestionStatus = QuestionStatus.NEW;
+  isAsked: boolean = false;
   error: any;
 }

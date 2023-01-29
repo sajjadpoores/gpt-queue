@@ -1,7 +1,7 @@
 import exceljs from "exceljs";
 import { Account } from "../../entities/account";
 
-export class AccountController {
+export class AccountRepository {
   constructor() {
     this.fileName = "accounts.xlsx";
     this.workbook = new exceljs.Workbook();
@@ -19,7 +19,7 @@ export class AccountController {
     );
 
     this.accounts = [];
-    await this.workbook.getWorksheet("Sheet1").eachRow((row, rowNumber) => {
+    await this.workbook.getWorksheet(1).eachRow((row, rowNumber) => {
       if (rowNumber > 1) {
         const account = new Account();
         account.email = row.getCell(2).toString();
