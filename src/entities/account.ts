@@ -21,7 +21,6 @@ export class Account {
       await this.api.initSession();
       this.lastTimeGotToken = new Date();
 
-      
       return this.api;
     } catch (err) {
       this.api.closeSession();
@@ -61,17 +60,15 @@ export class Account {
       return await this.api.sendMessage(message); // Send message
     } catch (err) {
       console.log(err.message);
-      return false;
+      throw err;
     }
   }
 
   async askQuestion(question: Question) {
     try {
       const result = await this.sendMessage(question.text); // Send message
-      if(result){
-        question.answer = result.response;
-        question.status = QuestionStatus.ANSWERED;
-      }
+      question.answer = result.response;
+      question.status = QuestionStatus.ANSWERED;
       return question;
     } catch (err) {
       console.log(err.message);

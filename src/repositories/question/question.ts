@@ -25,7 +25,13 @@ export class QuestionRepository {
           if (rowNumber > 1) {
             const question = new Question();
             question.text = row.getCell(1).toString();
-            question.status = QuestionStatus.NEW;
+            question.answer = row.getCell(2).toString();
+            if (question.answer) {
+              question.status = QuestionStatus.ANSWERED;
+            } else {
+              question.status = QuestionStatus.NEW;
+            }
+
             this.questions.push(question);
           }
         });
@@ -49,7 +55,11 @@ export class QuestionRepository {
     const worksheet = this.workbook.getWorksheet(1);
     worksheet.eachRow((row: exceljs.Row, rowNumber) => {
       if (row.getCell(1).toString() === question.text) {
-        row.splice(2, 1, question.answer)
+        if (question.status === QuestionStatus.ANSWERED) {
+          row.splice(2, 1, question.answer);
+        } else if (question.status === QuestionStatus.ERROR) {
+          row.splice(3, 1, question.error);
+        }
         this.workbook.xlsx.writeFile("./data/" + this.fileName);
       }
     });
