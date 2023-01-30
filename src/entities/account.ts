@@ -1,5 +1,11 @@
 import { ChatGPTAPIBrowser } from "chatgpt";
+import { QuestionRepository } from "../repositories/question/question";
 import { Question, QuestionStatus } from "./question";
+
+type Task = {
+  question: Question;
+  index: number;
+};
 
 export class Account {
   email: string;
@@ -7,6 +13,7 @@ export class Account {
   isGoogleLogin: boolean;
   lastTimeGotToken: Date;
   api: ChatGPTAPIBrowser;
+  tasks: Task[] = [];
 
   async connect() {
     try {
@@ -75,6 +82,33 @@ export class Account {
       question.error = err;
       question.status = QuestionStatus.ERROR;
       return question;
+    }
+  }
+
+  async addTask(task: Task) {
+    this.tasks.push(task);
+  }
+
+  async popTask() {
+    return this.tasks.pop();
+  }
+
+  async doTasksAndSaveTheResults(questionManager: QuestionRepository) {
+    while (this.tasks.length > 0) {
+      let { question, index } = await this.popTask();
+      if (question) {
+        console.log(
+          "account: " + this.email + " is answering question: " + index
+        );
+        question = await this.askQuestion(question);
+        if (question.status === QuestionStatus.ANSWERED) {
+          questionManager.saveData(question, this);
+          console.log("question " + index + " answered: " + question.answer);
+        } else if (question.status === QuestionStatus.ERROR) {
+          questionManager.saveData(question, this);
+          console.log("question " + index + " error: " + question.error);
+        }
+      }
     }
   }
 }

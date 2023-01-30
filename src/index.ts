@@ -15,7 +15,7 @@ async function main() {
     await account.connect();
   }
 
-  console.log("now we start with the questions");
+  console.log("now we start with the assigning the questions");
   let counter = 0;
   console.log("total questions: " + questions.length);
   for (let question of questions) {
@@ -24,19 +24,21 @@ async function main() {
       console.log("question already answered: " + question.answer);
       continue;
     }
-
     const selctedAccount = accountManager.getAccountByPriority();
-    console.log("selected account for this question: " + selctedAccount.email);
-    question = await selctedAccount.askQuestion(question);
+    selctedAccount.addTask({question, index: counter});
 
-    if (question.status === QuestionStatus.ANSWERED) {
-      questionManager.saveData(question);
-      console.log("question answered: " + question.answer);
-    } else if (question.status === QuestionStatus.ERROR) {
-      questionManager.saveData(question);
-      console.log("question error: " + question.error);
-    }
+    console.log("selected account for this question: " + selctedAccount.email);
   }
+
+  console.log("all questions assigned to accounts");
+  console.log("now we start with the answering the questions");
+
+  const promises = [];
+  for (const account of accounts) {
+    promises.push(account.doTasksAndSaveTheResults(questionManager));
+  }
+
+  await Promise.all(promises);
 }
 
 await main();

@@ -1,12 +1,14 @@
 import exceljs from "exceljs";
+import { Account } from "../../entities/account";
 import { Question, QuestionStatus } from "../../entities/question";
 export class QuestionRepository {
+  
   constructor() {
     this.fileName = "questions.xlsx";
     this.workbook = new exceljs.Workbook();
     this.questions = [];
   }
-
+  
   private fileName: string;
   private workbook: exceljs.Workbook;
   private questions: Question[];
@@ -46,7 +48,7 @@ export class QuestionRepository {
     }
   }
 
-  async saveData(question: Question) {
+  async saveData(question: Question, account: Account) {
     if (!this.workbook) {
       console.log("workbook not loaded, you need to call loadData() first");
       return;
@@ -56,9 +58,9 @@ export class QuestionRepository {
     worksheet.eachRow((row: exceljs.Row, rowNumber) => {
       if (row.getCell(1).toString() === question.text) {
         if (question.status === QuestionStatus.ANSWERED) {
-          row.splice(2, 1, question.answer);
+          row.splice(2, 1, question.answer, account.email);
         } else if (question.status === QuestionStatus.ERROR) {
-          row.splice(3, 1, question.error);
+          row.splice(3, 1, question.error, account.email);
         }
         this.workbook.xlsx.writeFile("./data/" + this.fileName);
       }
