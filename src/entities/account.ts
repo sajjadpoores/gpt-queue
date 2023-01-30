@@ -1,28 +1,30 @@
 import { ChatGPTAPIBrowser } from "chatgpt";
+import { Question, QuestionStatus } from "./question";
 
 export class Account {
   email: string;
   password: string;
   isGoogleLogin: boolean;
   lastTimeGotToken: Date;
+  api: ChatGPTAPIBrowser;
 
   async connect() {
-    let api: ChatGPTAPIBrowser;
     try {
       console.log(
         "Connecting to ChatGPT API for account: " + this.email + " ..."
       );
-      api = new ChatGPTAPIBrowser({
+      this.api = new ChatGPTAPIBrowser({
         email: this.email,
         password: this.password,
         isGoogleLogin: this.isGoogleLogin,
       });
-      await api.initSession();
+      await this.api.initSession();
       this.lastTimeGotToken = new Date();
+
       
-      return api;
+      return this.api;
     } catch (err) {
-      api.closeSession();
+      this.api.closeSession();
       if (err.statusCode === 429) {
         // TODO: handle too many requests by waiting 5 seconds
         console.log("Too many requests");
@@ -43,18 +45,39 @@ export class Account {
     }
   }
 
-  async sendMessage(api: ChatGPTAPIBrowser, mssg: string) {
+  async refreshTokenIfNeeded() {
+    const diff = new Date().getTime() - this.lastTimeGotToken.getTime();
+
+    if (diff > 1000 * 60 * 60) {
+      // 1 hour
+      await this.api.refreshSession();
+      this.lastTimeGotToken = new Date();
+    }
+  }
+
+  async sendMessage(message: string) {
     try {
-      if(api.getIsAuthenticated()) {
-        await api.sendMessage(mssg);
-        return true;
-      }
-      else {
-        api.resetSession();
-      }
+      await this.refreshTokenIfNeeded(); // Refresh token if needed
+      return await this.api.sendMessage(message); // Send message
     } catch (err) {
       console.log(err.message);
       return false;
+    }
+  }
+
+  async askQuestion(question: Question) {
+    try {
+      const result = await this.sendMessage(question.text); // Send message
+      if(result){
+        question.answer = result.response;
+        question.status = QuestionStatus.ANSWERED;
+      }
+      return question;
+    } catch (err) {
+      console.log(err.message);
+      question.error = err;
+      question.status = QuestionStatus.ERROR;
+      return question;
     }
   }
 }

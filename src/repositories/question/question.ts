@@ -13,30 +13,45 @@ export class QuestionRepository {
 
   async loadData() {
     try {
-        this.workbook = new exceljs.Workbook();
-        this.workbook = await this.workbook.xlsx.readFile(
-          "./data/" + this.fileName
-        );
-    
-        this.questions = [];
-        await this.workbook.getWorksheet(1).eachRow((row: exceljs.Row, rowNumber) => {
+      this.workbook = new exceljs.Workbook();
+      this.workbook = await this.workbook.xlsx.readFile(
+        "./data/" + this.fileName
+      );
+
+      this.questions = [];
+      await this.workbook
+        .getWorksheet(1)
+        .eachRow((row: exceljs.Row, rowNumber) => {
           if (rowNumber > 1) {
-              const question = new Question();
-              question.text = row.getCell(1).toString();
-              question.status = QuestionStatus.NEW;
-              this.questions.push(question);
+            const question = new Question();
+            question.text = row.getCell(1).toString();
+            question.status = QuestionStatus.NEW;
+            this.questions.push(question);
           }
         });
-        return this.questions;
+      return this.questions;
+    } catch (error) {
+      if (error.message.includes("File not found")) {
+        console.log("excel file for questions not found");
+      } else {
+        console.log(error);
+      }
+      return [];
     }
-    catch(error) {
-        if(error.message.includes("File not found")) {
-            console.log("excel file for questions not found")
-        }
-        else {
-            console.log(error)
-        }
-        return [];
+  }
+
+  async saveData(question: Question) {
+    if (!this.workbook) {
+      console.log("workbook not loaded, you need to call loadData() first");
+      return;
     }
+
+    const worksheet = this.workbook.getWorksheet(1);
+    worksheet.eachRow((row: exceljs.Row, rowNumber) => {
+      if (row.getCell(1).toString() === question.text) {
+        row.splice(2, 1, question.answer)
+        this.workbook.xlsx.writeFile("./data/" + this.fileName);
+      }
+    });
   }
 }

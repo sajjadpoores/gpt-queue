@@ -11,6 +11,7 @@ export class AccountRepository {
   private fileName: string;
   private workbook: exceljs.Workbook;
   private accounts: Account[];
+  private currentIndex: number = 0;
 
   async loadData() {
     this.workbook = new exceljs.Workbook();
@@ -33,5 +34,11 @@ export class AccountRepository {
 
   getAccounts() {
     return this.accounts;
+  }
+
+  getAccountByPriority() {
+    const selectedAccount =  this.accounts[this.currentIndex];
+    this.currentIndex = (this.currentIndex + 1) % this.accounts.length;
+    return selectedAccount;
   }
 }
