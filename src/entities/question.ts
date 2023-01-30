@@ -7,6 +7,7 @@ export enum QuestionStatus {
 }
 
 export class Question {
+  index: number;
   text: string;
   answer: string;
   status: QuestionStatus = QuestionStatus.NEW;

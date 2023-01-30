@@ -2,13 +2,12 @@ import exceljs from "exceljs";
 import { Account } from "../../entities/account";
 import { Question, QuestionStatus } from "../../entities/question";
 export class QuestionRepository {
-  
   constructor() {
     this.fileName = "questions.xlsx";
     this.workbook = new exceljs.Workbook();
     this.questions = [];
   }
-  
+
   private fileName: string;
   private workbook: exceljs.Workbook;
   private questions: Question[];
@@ -26,6 +25,7 @@ export class QuestionRepository {
         .eachRow((row: exceljs.Row, rowNumber) => {
           if (rowNumber > 1) {
             const question = new Question();
+            question.index = rowNumber - 1;
             question.text = row.getCell(1).toString();
             question.answer = row.getCell(2).toString();
             if (question.answer) {
@@ -55,15 +55,28 @@ export class QuestionRepository {
     }
 
     const worksheet = this.workbook.getWorksheet(1);
-    worksheet.eachRow((row: exceljs.Row, rowNumber) => {
+    worksheet.eachRow((row: exceljs.Row) => {
       if (row.getCell(1).toString() === question.text) {
         if (question.status === QuestionStatus.ANSWERED) {
           row.splice(2, 1, question.answer, account.email);
         } else if (question.status === QuestionStatus.ERROR) {
-          row.splice(3, 1, question.error, account.email);
+          row.splice(3, 1, account.email, question.error);
         }
         this.workbook.xlsx.writeFile("./data/" + this.fileName);
       }
     });
+  }
+
+  getNextUnansweredQuestion() {
+    const question = this.questions.find((q) => {
+      return q.status === QuestionStatus.NEW;
+    });
+    if (question) {
+      question.status = QuestionStatus.IN_PROGRESS;
+      return question;
+    }
+
+    console.log("All questions answered");
+    return null;
   }
 }

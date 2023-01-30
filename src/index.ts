@@ -13,29 +13,17 @@ async function main() {
   console.log("first we start with the accounts");
   for (const account of accounts) {
     await account.connect();
-  }
-
-  console.log("now we start with the assigning the questions");
-  let counter = 0;
-  console.log("total questions: " + questions.length);
-  for (let question of questions) {
-    console.log("question number: " + ++counter);
-    if (question.status === QuestionStatus.ANSWERED) {
-      console.log("question already answered: " + question.answer);
-      continue;
+    if(!account.lastTimeGotToken) {
+        await account.refreshTokenIfNeeded();
     }
-    const selctedAccount = accountManager.getAccountByPriority();
-    selctedAccount.addTask({question, index: counter});
-
-    console.log("selected account for this question: " + selctedAccount.email);
   }
 
-  console.log("all questions assigned to accounts");
   console.log("now we start with the answering the questions");
+  console.log("total questions: " + questions.length);
 
   const promises = [];
   for (const account of accounts) {
-    promises.push(account.doTasksAndSaveTheResults(questionManager));
+    promises.push(account.startAskingQuestions(questionManager));
   }
 
   await Promise.all(promises);
