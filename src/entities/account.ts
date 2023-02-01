@@ -21,7 +21,6 @@ export class Account {
       });
       await this.api.initSession();
       this.lastTimeGotToken = new Date();
-
       return this.api;
     } catch (err) {
       this.api.closeSession();
@@ -41,11 +40,16 @@ export class Account {
         // TODO: Handle this error by restarting the browser
         return null;
       }
-      console.log(err.message);
+      console.log("could not connect for account " + this.email, err.message);
     }
   }
 
   async refreshTokenIfNeeded() {
+    if (!this.lastTimeGotToken) {
+      await this.api.refreshSession();
+      this.lastTimeGotToken = new Date();
+      return;
+    }
     const diff = new Date().getTime() - this.lastTimeGotToken.getTime();
 
     if (diff > 1000 * 60 * 60) {
@@ -60,7 +64,13 @@ export class Account {
       await this.refreshTokenIfNeeded(); // Refresh token if needed
       return await this.api.sendMessage(message); // Send message
     } catch (err) {
-      console.log(err.message);
+      if(err.message.includes("error 429")) {
+        console.log("account: " + this.email + " is being rate limited");
+        console.log("trying to reset session")
+        await this.api.resetSession();
+        // TODO: create a loop to try again until it is not rate limited anymore
+      }
+
       throw err;
     }
   }

@@ -58,9 +58,9 @@ export class QuestionRepository {
     worksheet.eachRow((row: exceljs.Row) => {
       if (row.getCell(1).toString() === question.text) {
         if (question.status === QuestionStatus.ANSWERED) {
-          row.splice(2, 1, question.answer, account.email);
+          row.splice(2, 2, question.answer, account.email);
         } else if (question.status === QuestionStatus.ERROR) {
-          row.splice(3, 1, account.email, question.error);
+          row.splice(3, 2, account.email, question.error);
         }
         this.workbook.xlsx.writeFile("./data/" + this.fileName);
       }
