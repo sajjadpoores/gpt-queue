@@ -23,9 +23,8 @@ export class AccountRepository {
     await this.workbook.getWorksheet(1).eachRow((row, rowNumber) => {
       if (rowNumber > 1) {
         const account = new Account();
-        account.email = row.getCell(2).toString();
-        account.password = row.getCell(3).toString();
-        account.isGoogleLogin = row.getCell(4).toString() === "1";
+        account.apiKey = row.getCell(2).toString();
+        account.index = rowNumber - 1;
         this.accounts.push(account);
       }
     });

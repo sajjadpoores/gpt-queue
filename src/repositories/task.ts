@@ -39,31 +39,18 @@ export class TaskController {
   async doTask(questionManager: QuestionRepository, task: Task) {
     let nextTask: Task | null = null;
     if (task.type === TaskType.NEW_CONNECTION) {
-      console.log("[" + task.account.email + "]: connecting...");
-      await task.account.connect();
-      while (!task.account.lastTimeGotToken) {
-        console.log("[" + task.account.email + "]: retrying to connect...");
+      console.log("[" + task.account.index + "]: connecting...");
+      while (!(await task.account.connect())) {
+        console.log("[" + task.account.index + "]: retrying to connect...");
         await task.account.connect();
       }
     }
     if (task.question && task.type === TaskType.ASK) {
       const question = await task.account.askQuestion(task.question);
       questionManager.saveData(question, task.account);
-
-      if (question.status === QuestionStatus.ERROR) {
-        nextTask = await this.createNextTask(
-          questionManager,
-          TaskType.CONNECTION,
-          task.account
-        );
-      }
-
-    } else if (task.type === TaskType.CONNECTION) {
-      while (!(await task.account.resetSession()));
     }
 
-
-    if(!nextTask) {
+    if (!nextTask) {
       nextTask = await this.createNextTask(
         questionManager,
         TaskType.ASK,
@@ -74,6 +61,7 @@ export class TaskController {
     if (nextTask) {
       this.addTask(nextTask);
     }
+
     return nextTask;
   }
 

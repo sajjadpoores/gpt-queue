@@ -13,7 +13,7 @@ async function connectAccountAndStarAsking(
   while (taskRepo.hasTask()) {
     await taskRepo.doTask(questionManager, taskRepo.getTask()!);
   }
-  console.log("[" + account.email + "]: did all its tasks");
+  console.log("[" + account.index + "]: did all its tasks");
 }
 
 async function main() {
@@ -27,8 +27,12 @@ async function main() {
 
   console.log("total questions: " + questions.length);
   const promises: Promise<void>[] = [];
+
+  const THREADS_PER_ACCOUNT = 3;
   for (const account of accounts) {
-    promises.push(connectAccountAndStarAsking(account, questionManager));
+    for (let i = 0; i < THREADS_PER_ACCOUNT; i++) {
+      promises.push(connectAccountAndStarAsking(account, questionManager));
+    }
   }
 
   await Promise.all(promises);

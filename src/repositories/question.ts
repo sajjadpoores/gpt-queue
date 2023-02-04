@@ -58,9 +58,9 @@ export class QuestionRepository {
     worksheet.eachRow((row: exceljs.Row) => {
       if (row.getCell(1).toString() === question.text) {
         if (question.status === QuestionStatus.ANSWERED) {
-          row.splice(2, 2, question.answer, account.email);
+          row.splice(2, 2, question.answer, account.apiKey);
         } else if (question.status === QuestionStatus.ERROR) {
-          row.splice(3, 2, account.email, question.error);
+          row.splice(3, 2, account.apiKey, question.error);
         }
         this.workbook.xlsx.writeFile("./data/" + this.fileName);
       }
@@ -69,7 +69,9 @@ export class QuestionRepository {
 
   getNextUnansweredQuestion() {
     const question = this.questions.find((q) => {
-      return q.status !== QuestionStatus.ANSWERED;
+      return (
+        ![QuestionStatus.IN_PROGRESS, QuestionStatus.ANSWERED].includes(q.status) 
+      );
     });
     if (question) {
       question.status = QuestionStatus.IN_PROGRESS;
