@@ -1,5 +1,4 @@
 import { ChatGPTAPIBrowser } from "chatgpt";
-import { QuestionRepository } from "../repositories/question/question";
 import { Question, QuestionStatus } from "./question";
 
 export class Account {
@@ -11,9 +10,7 @@ export class Account {
 
   async connect() {
     try {
-      console.log(
-        "Connecting to ChatGPT API for account: " + this.email + " ..."
-      );
+      console.log("[" + this.email + "]: Connecting to ChatGPT API...");
       this.api = new ChatGPTAPIBrowser({
         email: this.email,
         password: this.password,
@@ -23,11 +20,8 @@ export class Account {
       this.lastTimeGotToken = new Date();
       return this.api;
     } catch (err) {
-      this.api.closeSession();
       if (err.statusCode === 429) {
-        // TODO: handle too many requests by waiting 5 seconds
-        console.log("Too many requests");
-        return null;
+        console.log("[" + this.email + "]: Too many requests.");
       } else if (
         err.message.includes(
           "Navigation failed because browser has disconnected!"
@@ -36,17 +30,36 @@ export class Account {
           "Protocol error (Runtime.callFunctionOn): Target closed."
         )
       ) {
-        console.log("Browser has disconnected");
-        // TODO: Handle this error by restarting the browser
-        return null;
+        console.log("[" + this.email + "]: Browser has disconnected.");
       }
-      console.log("could not connect for account " + this.email, err.message);
+      console.log(
+        "[" + this.email + "]: could not connect, got error: ",
+        err.message
+      );
+      return false;
+    }
+  }
+
+  async resetSession() {
+    console.log("[" + this.email + "]: " + "account: trying to reset session");
+    try {
+      await this.api.resetSession();
+      return true;
+    } catch (err) {
+      console.log(
+        "[" +
+          this.email +
+          "]: could not reset session for account " +
+          this.email,
+        err.message
+      );
+      return false;
     }
   }
 
   async refreshTokenIfNeeded() {
     if (!this.lastTimeGotToken) {
-      await this.api.refreshSession();
+      await this.resetSession();
       this.lastTimeGotToken = new Date();
       return;
     }
@@ -59,64 +72,40 @@ export class Account {
     }
   }
 
-  async sendMessage(message: string) {
+  async sendMessageOrThrowError(message: string) {
     try {
       await this.refreshTokenIfNeeded(); // Refresh token if needed
       return await this.api.sendMessage(message); // Send message
     } catch (err) {
-      if(err.message.includes("error 429")) {
-        console.log("account: " + this.email + " is being rate limited");
-        console.log("trying to reset session")
-        await this.api.resetSession();
-        // TODO: create a loop to try again until it is not rate limited anymore
+      if (err.message.includes("error 429")) {
+        console.log("[" + this.email + "] " + "account: is being rate limited");
       }
 
       throw err;
     }
   }
 
+
   async askQuestion(question: Question) {
     try {
-      const result = await this.sendMessage(question.text); // Send message
+      console.log(
+        "[" + this.email + "] " + " asking question " + question.index
+      );
+      const result = await this.sendMessageOrThrowError(question.text); // Send message
+      console.log(
+        "[" + this.email + "] " + " got answer for question " + question.index
+      );
       question.answer = result.response;
       question.status = QuestionStatus.ANSWERED;
       return question;
     } catch (err) {
-      console.log(err.message);
+      console.log(
+        "[" + this.email + "] " + " got error for question " + question.index
+      );
+      console.log("error:", err.message);
       question.error = err;
       question.status = QuestionStatus.ERROR;
       return question;
-    }
-  }
-
-  async startAskingQuestions(questionManager: QuestionRepository) {
-    let question: Question;
-    while ((question = questionManager.getNextUnansweredQuestion())) {
-      console.log(
-        "account: " + this.email + " is asking question " + question.index
-      );
-      question = await this.askQuestion(question);
-      if (question.status === QuestionStatus.ANSWERED) {
-        questionManager.saveData(question, this);
-        console.log(
-          "question " +
-            question.index +
-            ": " +
-            question.text +
-            "\nanswered: " +
-            question.answer
-        );
-      } else if (question.status === QuestionStatus.ERROR) {
-        questionManager.saveData(question, this);
-        console.log(
-          "question " +
-            question.index +
-            ": " +
-            question.text +
-            " got error: " +
-            question.error
-        );
-      }
     }
   }
 }

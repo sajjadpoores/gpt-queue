@@ -1,6 +1,6 @@
 import exceljs from "exceljs";
-import { Account } from "../../entities/account";
-import { Question, QuestionStatus } from "../../entities/question";
+import { Account } from "../entities/account";
+import { Question, QuestionStatus } from "../entities/question";
 export class QuestionRepository {
   constructor() {
     this.fileName = "questions.xlsx";
@@ -69,7 +69,7 @@ export class QuestionRepository {
 
   getNextUnansweredQuestion() {
     const question = this.questions.find((q) => {
-      return q.status === QuestionStatus.NEW;
+      return q.status !== QuestionStatus.ANSWERED;
     });
     if (question) {
       question.status = QuestionStatus.IN_PROGRESS;

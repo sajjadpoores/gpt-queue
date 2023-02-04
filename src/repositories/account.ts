@@ -1,5 +1,5 @@
 import exceljs from "exceljs";
-import { Account } from "../../entities/account";
+import { Account } from "../entities/account";
 
 export class AccountRepository {
   constructor() {
@@ -41,4 +41,5 @@ export class AccountRepository {
     this.currentIndex = (this.currentIndex + 1) % this.accounts.length;
     return selectedAccount;
   }
+
 }

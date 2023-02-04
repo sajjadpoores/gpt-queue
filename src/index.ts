@@ -1,19 +1,19 @@
 import { Account } from "./entities/account";
-import { QuestionStatus } from "./entities/question";
-import { AccountRepository } from "./repositories/account/account";
-import { QuestionRepository } from "./repositories/question/question";
+import { TaskType } from "./entities/task";
+import { AccountRepository } from "./repositories/account";
+import { QuestionRepository } from "./repositories/question";
+import { TaskController } from "./repositories/task";
 
 async function connectAccountAndStarAsking(
   account: Account,
   questionManager: QuestionRepository
 ) {
-  console.log("connecting account: " + account.email);
-  await account.connect();
-  while(!account.lastTimeGotToken) {
-    console.log("retrying to connect account: " + account.email);
-    await account.connect();
+  const taskRepo = new TaskController();
+  taskRepo.addTask(taskRepo.createTask(TaskType.NEW_CONNECTION, account));
+  while (taskRepo.hasTask()) {
+    await taskRepo.doTask(questionManager, taskRepo.getTask()!);
   }
-  await account.startAskingQuestions(questionManager);
+  console.log("[" + account.email + "]: did all its tasks");
 }
 
 async function main() {
@@ -26,7 +26,7 @@ async function main() {
   console.log("app is ready to ask questions from chatGPT");
 
   console.log("total questions: " + questions.length);
-  const promises = [];
+  const promises: Promise<void>[] = [];
   for (const account of accounts) {
     promises.push(connectAccountAndStarAsking(account, questionManager));
   }
