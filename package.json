@@ -21,7 +21,7 @@
     "typescript": "^4.9.4"
   },
   "dependencies": {
-    "chatgpt": "^3.5.2",
+    "chatgpt": "^4.1.1",
     "exceljs": "^4.3.0",
     "node-fetch": "2.6.6",
     "puppeteer": "^19.6.3"
