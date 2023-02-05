@@ -28,7 +28,7 @@ async function main() {
   console.log("total questions: " + questions.length);
   const promises: Promise<void>[] = [];
 
-  const THREADS_PER_ACCOUNT = 3;
+  const THREADS_PER_ACCOUNT = 2;
   for (const account of accounts) {
     for (let i = 0; i < THREADS_PER_ACCOUNT; i++) {
       promises.push(connectAccountAndStarAsking(account, questionManager));
