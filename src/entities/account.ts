@@ -33,7 +33,9 @@ export class Account {
   async sendMessageOrThrowError(message: string) {
     try {
       return await this.api.sendMessage(message, {
-        promptPrefix: `You are ChatGPT, a large language model trained by OpenAI. Answer as concisely as possible. Your answers must be maximum 400 words long. Knowledge cutoff: 2021-09 Current date: ${new Date().toISOString()}.\n\n.`,
+        // YOU can write your prefix prompts here
+        promptPrefix: ``,
+        promptSuffix: '',
         timeoutMs: 3 * 60 * 1000,
       }); // Send message
     } catch (err) {
